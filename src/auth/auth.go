@@ -18,7 +18,7 @@ const (
 var tail_channel utils.TailChannel
 
 
-func authParser(lines chan string, events_chan chan events.Event) {
+func AuthParser(lines chan string, events_chan chan events.Event) {
 	var line string
 	for true {
 		line = <-lines
@@ -43,7 +43,7 @@ func isAuthEvent(line string) bool {
 func AuthHandler(events_chan chan events.Event) {
 	tail_channel = utils.Tail(auth_file)
 	var auth_chan chan string = make(chan string, 10)
-	go authParser(auth_chan, events_chan)
+	go AuthParser(auth_chan, events_chan)
 	for true{
 		select {
 			case <-tail_channel.Stop:

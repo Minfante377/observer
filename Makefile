@@ -24,7 +24,7 @@ run:
 	@GOPATH=$(GOPATH) go run $(RACE_FLAG) $(LDFLAGS) src/main.go
 
 test:
-	@GOPATH=$(GOPATH) go test -v utils
+	@GOPATH=$(GOPATH) go test -v utils auth
 
 clean:
 	rm -rf bin/
