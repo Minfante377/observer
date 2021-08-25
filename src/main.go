@@ -1,32 +1,21 @@
 package main
 
 import(
-	"fmt"
+	"auth"
+	"events"
 	"logger"
-	"utils"
+	"time"
 )
 
-const TAG string = "MAIN"
+const tag string = "MAIN"
 
 
 func main() {
-	var sys_tail chan string
-	var stop chan bool
-	var count int = 0
-	sys_tail, stop = utils.Tail("/var/log/auth.log")
+	var events_chan chan events.Event = make(chan events.Event, 100)
+	go events.EventHandler(events_chan)
+	go auth.AuthHandler(events_chan)
 	for true{
-		if count > 0 {
-			stop <- true
-			logger.LogInfo("Stopping tail", TAG)
-			break
-		}
-		line, ok := <-sys_tail
-		if ok {
-			logger.LogInfo(fmt.Sprintf("Last line is: %s", line), TAG)
-			count += 1
-		} else {
-			logger.LogError("Channel is closed", TAG)
-			break
-		}
+		logger.LogInfo("Running...", tag)
+		time.Sleep(time.Hour * 1)
 	}
 }

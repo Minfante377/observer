@@ -25,10 +25,11 @@ func reader(file_path string, tail_chan TailChannel) {
 	}
 
 	for line := range t.Lines {
-		if len(tail_chan.Stop) == 0 {
-			tail_chan.Tail <- line.Text
-		}else{
-			return
+		select {
+			case <-tail_chan.Stop:
+				return
+			default:
+				tail_chan.Tail <- line.Text
 		}
 	}
 }
