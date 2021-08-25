@@ -53,7 +53,7 @@ func TestTail(t *testing.T) {
 			logger.LogTestStep("Remove test files")
 			os.RemoveAll(c.input)
 		}()
-		tail, stop := Tail(c.input)
+		tail_channel:= Tail(c.input)
 
 		logger.LogTestStep(
 			"Write a line to the file and verify it was sent through the chan")
@@ -61,7 +61,7 @@ func TestTail(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error writing to the test file")
 		}
-		line, ok := <-tail
+		line, ok := <-tail_channel.Tail
 		if !ok {
 			t.Errorf("Error on the channel")
 		}
@@ -72,11 +72,11 @@ func TestTail(t *testing.T) {
 
 		logger.LogTestStep("Stop the tail and verify the chan is closed")
 		go func() {
-			stop <- true
+			tail_channel.Stop <- true
 		}()
 		time.Sleep(time.Second * 1)
 		select {
-		case _, ok = <-tail:
+		case _, ok = <-tail_channel.Tail:
 			t.Errorf("Channel did not get closed")
 		default:
 		}

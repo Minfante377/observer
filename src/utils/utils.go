@@ -8,8 +8,8 @@ import (
 )
 
 type TailChannel struct {
-	tail chan string
-	stop chan bool
+	Tail chan string
+	Stop chan bool
 }
 
 const TAG string = "UTILS"
@@ -25,8 +25,8 @@ func reader(file_path string, tail_chan TailChannel) {
 	}
 
 	for line := range t.Lines {
-		if len(tail_chan.stop) == 0 {
-			tail_chan.tail <- line.Text
+		if len(tail_chan.Stop) == 0 {
+			tail_chan.Tail <- line.Text
 		}else{
 			return
 		}
@@ -34,12 +34,12 @@ func reader(file_path string, tail_chan TailChannel) {
 }
 
 
-func Tail(file_path string) (chan string, chan bool) {
+func Tail(file_path string) (TailChannel) {
 
 	logger.LogInfo(fmt.Sprintf("Tail -f %s", file_path), TAG)
 	var tail TailChannel
-	tail.tail = make(chan string, 100)
-	tail.stop = make(chan bool, 1)
+	tail.Tail = make(chan string, 100)
+	tail.Stop = make(chan bool, 1)
 	go reader(file_path, tail)
-	return tail.tail, tail.stop
+	return tail
 }
