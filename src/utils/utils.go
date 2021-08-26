@@ -47,7 +47,7 @@ func reader(file_path string, tail_chan TailChannel) {
 }
 
 
-func parsePsOutput(output string) []Process {
+func ParsePsOutput(output string) []Process {
 	var processes []Process
 	space := regexp.MustCompile(`\s+`)
 	output = strings.TrimSuffix(output, "\n")
@@ -85,6 +85,6 @@ func GetProcessesByMemory() []Process {
 									err.Error()), TAG)
 		return nil
 	}
-	processes := parsePsOutput(string(out))
+	processes := ParsePsOutput(string(out))
 	return processes
 }

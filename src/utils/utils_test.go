@@ -82,3 +82,35 @@ func TestTail(t *testing.T) {
 		}
 	}
 }
+
+
+func TestParsePsOutput(t *testing.T) {
+	es := []struct {
+		input          string
+		output Process
+	}{
+		{"test_user 0  1.0 1.0 a a a   a   a a cmd --testarg",
+		Process{User:"test_user", Pid:0, Cpu:1.0, Memory:1.0,
+				Cmd:"cmd --testarg"}},
+	}
+	for _, c := range es {
+		logger.LogTestStep(fmt.Sprintf(
+			"Parse test input %s and verify the result", c.input))
+		process := ParsePsOutput(c.input)[0]
+		if process.User != c.output.User {
+			t.Errorf("User was not parsed correctly: %s", process.User)
+		}
+		if process.Pid != c.output.Pid {
+			t.Errorf("PID was not parsed correctly: %d", process.Pid)
+		}
+		if process.Cpu != c.output.Cpu {
+			t.Errorf("CPU usage was not parsed correctly: %f", process.Cpu)
+		}
+		if process.Memory != c.output.Memory {
+			t.Errorf("Memory was not parsed correctly: %f", process.Memory)
+		}
+		if process.Cmd != c.output.Cmd {
+			t.Errorf("Cmd was not parsed correctly: %s", process.Cmd)
+		}
+	}
+}	
