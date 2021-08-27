@@ -114,3 +114,29 @@ func TestParsePsOutput(t *testing.T) {
 		}
 	}
 }
+
+
+func TestParseDfOutput(t *testing.T) {
+	es := []struct {
+		input          string
+		output Partition
+	}{
+		{"/dev/sda2       100G  50G  50G  50% /test/path",
+		Partition{Fs:"/dev/sda2", Used:50, Mount:"/test/path"}},
+	}
+	for _, c := range es {
+		logger.LogTestStep(fmt.Sprintf(
+			"Parse test input %s and verify the result", c.input))
+		partition := ParseDfOutput(c.input)[0]
+		if partition.Fs != c.output.Fs {
+			t.Errorf("Fs was not parsed correctly: %s", partition.Fs)
+		}
+		if partition.Used != c.output.Used {
+			t.Errorf("Usage was not parsed correctly: %d", partition.Used)
+		}
+		if partition.Mount != c.output.Mount {
+			t.Errorf("Mount path usage was not parsed correctly: %s",
+					 partition.Mount)
+		}
+	}
+}
