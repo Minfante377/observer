@@ -113,4 +113,4 @@ func TestParsePsOutput(t *testing.T) {
 			t.Errorf("Cmd was not parsed correctly: %s", process.Cmd)
 		}
 	}
-}	
+}

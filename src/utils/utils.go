@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"bufio"
 	"fmt"
 	"logger"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -24,7 +26,7 @@ type Process struct {
 	Cmd string
 }
 
-const TAG string = "UTILS"
+const tag string = "UTILS"
 
 
 func reader(file_path string, tail_chan TailChannel) {
@@ -32,7 +34,7 @@ func reader(file_path string, tail_chan TailChannel) {
 	t, err := tail.TailFile(file_path, config)
 	if err != nil {
 		logger.LogError(fmt.Sprintf("Error following file %s: %s",
-									file_path, err.Error()), TAG)
+									file_path, err.Error()), tag)
 		return
 	}
 
@@ -65,14 +67,39 @@ func ParsePsOutput(output string) []Process {
 	return processes
 }
 
+
 func Tail(file_path string) (TailChannel) {
 
-	logger.LogInfo(fmt.Sprintf("Tail -f %s", file_path), TAG)
+	logger.LogInfo(fmt.Sprintf("Tail -f %s", file_path), tag)
 	var tail TailChannel
 	tail.Tail = make(chan string, 100)
     tail.Stop = make(chan bool, 1)
 	go reader(file_path, tail)
 	return tail
+}
+
+
+func GetTotalMemory() (float64, float64) {
+	f, err := os.Open("/proc/meminfo")
+	if err != nil {
+		logger.LogError("Error reading meminfo file", tag)
+		return -1 , -1
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	scanner.Scan()
+	var total_memory_line string = scanner.Text()
+	scanner.Scan()
+	scanner.Scan()
+	var available_memory_line string = scanner.Text()
+	space := regexp.MustCompile(`\s+`)
+	total_memory_line = space.ReplaceAllString(total_memory_line, " ")
+	available_memory_line = space.ReplaceAllString(available_memory_line, " ")
+	total_memory_line = strings.Split(total_memory_line, " ")[1]
+	available_memory_line = strings.Split(available_memory_line, " ")[1]
+	total_memory, _ := strconv.ParseFloat(total_memory_line, 32)
+	available_memory, _ := strconv.ParseFloat(available_memory_line, 32)
+	return total_memory, available_memory
 }
 
 
@@ -82,7 +109,7 @@ func GetProcessesByMemory() []Process {
 	out, err := command.Output()
 	if err != nil {
 		logger.LogError(fmt.Sprintf("Error getting processes by memory: %s",
-									err.Error()), TAG)
+									err.Error()), tag)
 		return nil
 	}
 	processes := ParsePsOutput(string(out))
