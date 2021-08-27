@@ -3,6 +3,7 @@ package main
 import(
 	"auth"
 	"events"
+	"filesystem"
 	"logger"
 	"memory"
 	"time"
@@ -10,6 +11,7 @@ import(
 
 const tag string = "MAIN"
 const memoryTh float64 = 0.8
+const diskTh int = 10
 
 
 func main() {
@@ -17,6 +19,7 @@ func main() {
 	go events.EventHandler(events_chan)
 	go auth.AuthHandler(events_chan)
 	go memory.MemoryHandler(events_chan, memoryTh)
+	go filesystem.FsHandler(events_chan, diskTh)
 	for true{
 		logger.LogInfo("Running...", tag)
 		time.Sleep(time.Hour * 1)

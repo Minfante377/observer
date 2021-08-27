@@ -26,6 +26,12 @@ type Process struct {
 	Cmd string
 }
 
+type Partition struct {
+	Used int
+	Fs string
+	Mount string
+}
+
 const tag string = "UTILS"
 
 
@@ -65,6 +71,24 @@ func ParsePsOutput(output string) []Process {
 		processes = append(processes, process)
 	}
 	return processes
+}
+
+
+func ParseDfOutput(output string) []Partition {
+	var partitions []Partition
+	space := regexp.MustCompile(`\s+`)
+	output = strings.TrimSuffix(output, "\n")
+	for _, line := range strings.Split(output, "\n") {
+		line = space.ReplaceAllString(line, " ")
+		elements := strings.Split(line, " ")
+		var partition Partition
+		partition.Fs = elements[0]
+		partition.Mount = elements[5]
+		partition.Used, _ = strconv.Atoi(strings.Replace(
+			elements[4], "%", "", 1))
+		partitions = append(partitions, partition)
+	}
+	return partitions
 }
 
 
@@ -114,4 +138,18 @@ func GetProcessesByMemory() []Process {
 	}
 	processes := ParsePsOutput(string(out))
 	return processes
+}
+
+
+func GetDiskUsage() []Partition {
+	var cmd string = "df -h --type=ext4| tail -n +2"
+	command := exec.Command("bash", "-c", cmd)
+	out, err := command.Output()
+	if err != nil {
+		logger.LogError(fmt.Sprintf("Error getting disk usage: %s",
+									err.Error()), tag)
+		return nil
+	}
+	partitions := ParseDfOutput(string(out))
+	return partitions
 }

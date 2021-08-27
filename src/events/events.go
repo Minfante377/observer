@@ -10,6 +10,7 @@ const (
 	AuthFailure int = 0
 	TopMemoryUser int = 1
 	MemoryTh int = 2
+	DiskUsageAlarm int = 3
 )
 
 type Event struct {
@@ -38,6 +39,9 @@ func EventHandler(events chan Event) {
 					event.Date, event.User, event.Pid, event.Cmd), tag)
 		}else if event.EventType == MemoryTh {
 			logger.LogInfo(fmt.Sprintf("Memory th excedeed: %s", event.Notes),
+									   tag)
+		}else if event.EventType == DiskUsageAlarm {
+			logger.LogInfo(fmt.Sprintf("Disk usage alarm: %s", event.Notes),
 									   tag)
 		}else{
 			logger.LogInfo(fmt.Sprintf("Event %d not implemented",
