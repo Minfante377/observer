@@ -3,9 +3,11 @@ package utils
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"logger"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -152,4 +154,26 @@ func GetDiskUsage() []Partition {
 	}
 	partitions := ParseDfOutput(string(out))
 	return partitions
+}
+
+
+func GetFiles(path string) ([]string, []string) {
+	files, err := ioutil.ReadDir(path)
+	var dirs, hidden_files []string
+	if err != nil {
+		return nil, nil
+	}
+
+	for _, fileInfo := range files {
+		if fileInfo.IsDir() {
+			dirs = append(dirs, filepath.Join(path, string(fileInfo.Name())))
+		}else{
+			if string(fileInfo.Name()[0]) == "." {
+				hidden_files = append(
+					hidden_files,
+					filepath.Join(path, string(fileInfo.Name())))
+			}
+		}
+	}
+	return dirs, hidden_files
 }

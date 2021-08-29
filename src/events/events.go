@@ -11,6 +11,7 @@ const (
 	TopMemoryUser int = 1
 	MemoryTh int = 2
 	DiskUsageAlarm int = 3
+	HiddenFileMod int = 4
 )
 
 type Event struct {
@@ -42,6 +43,9 @@ func EventHandler(events chan Event) {
 									   tag)
 		}else if event.EventType == DiskUsageAlarm {
 			logger.LogInfo(fmt.Sprintf("Disk usage alarm: %s", event.Notes),
+									   tag)
+		}else if event.EventType == HiddenFileMod {
+			logger.LogInfo(fmt.Sprintf("[%s]: %s", event.Date, event.Notes),
 									   tag)
 		}else{
 			logger.LogInfo(fmt.Sprintf("Event %d not implemented",
