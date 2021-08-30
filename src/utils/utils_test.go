@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"logger"
 	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 	"time"
@@ -138,5 +139,42 @@ func TestParseDfOutput(t *testing.T) {
 			t.Errorf("Mount path usage was not parsed correctly: %s",
 					 partition.Mount)
 		}
+	}
+}
+
+
+func TestGetFiles(t *testing.T) {
+	es := []struct {
+		input          string
+		output []string
+	}{
+		{"./test_folder",
+		 []string{"test_folder", ".test_file"}},
+	}
+	for _, c := range es {
+		logger.LogTestStep(fmt.Sprintf("Create test files"))
+		os.Mkdir(c.input, 0777)
+		os.Mkdir(filepath.Join(c.input, c.output[0]), 0777)
+		_, err := os.OpenFile(filepath.Join(c.input, c.output[1]),
+							  os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+							   0666)
+		if err != nil {
+			t.Errorf("Error creating test file %s", c.input)
+		}
+		defer func() {
+			logger.LogTestStep("Remove test files")
+			os.RemoveAll(c.input)
+		}()
+
+		logger.LogTestStep("Execute function and verify output")
+		dirs, files := GetFiles(c.input)
+		if dirs[0] != filepath.Join(c.input, c.output[0]) {
+			t.Errorf("Failure retrieving folders: %s vs %s", dirs[0],
+					 filepath.Join(c.input, c.output[0]))
+		}
+		if files[0] != filepath.Join(c.input, c.output[1]) {
+			t.Errorf("Failure retrieving hidden files: %s vs %s", files[0],
+			         filepath.Join(c.input, c.output[1]))
+        }
 	}
 }
