@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"logger"
 	"os"
+	"sync"
 	"time"
 	"utils"
 )
@@ -56,21 +57,36 @@ func checkFile(file string, events_chan chan events.Event, last_check int64) {
 }
 
 
-func checkDir(path string, events_chan chan events.Event, last_check int64) {
+func _checkDir(path string, events_chan chan events.Event, last_check int64) {
 	var dirs, files []string
 	dirs, files = utils.GetFiles(path)
 	for _, f := range files {
 		go checkFile(f, events_chan, last_check)
 	}
 	for _, dir := range dirs {
-		checkDir(dir, events_chan, last_check)
+		_checkDir(dir, events_chan, last_check)
 	}
+}
+
+
+func checkDir(path string, events_chan chan events.Event, last_check int64,
+			  wg *sync.WaitGroup) {
+	var dirs, files []string
+	dirs, files = utils.GetFiles(path)
+	for _, f := range files {
+		go checkFile(f, events_chan, last_check)
+	}
+	for _, dir := range dirs {
+		_checkDir(dir, events_chan, last_check)
+	}
+	wg.Done()
 }
 
 
 func hiddenFilesHandler(events_chan chan events.Event) {
 	var last_check int64
 	var dirs, files []string
+	var wg sync.WaitGroup
 	for true {
 		if stop {
 			logger.LogInfo("Stopping hidden files analysis", tag)
@@ -83,9 +99,11 @@ func hiddenFilesHandler(events_chan chan events.Event) {
 			go checkFile(f, events_chan, last_check)
 		}
 		for _, dir := range dirs {
-			go checkDir(dir, events_chan, last_check)
+			wg.Add(1)
+			go checkDir(dir, events_chan, last_check, &wg)
 		}
-		time.Sleep(time.Hour * 1)
+		wg.Wait()
+		time.Sleep(time.Minute * 1)
 	}
 }
 
