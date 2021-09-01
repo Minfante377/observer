@@ -34,7 +34,21 @@ type Partition struct {
 	Mount string
 }
 
+type Config struct {
+	Auth bool
+	Memory bool
+	Fs bool
+	MemoryTh float64
+	StorageTh int
+}
+
+
 const tag string = "UTILS"
+const authModule string = "auth_module"
+const memoryModule string = "memory_module"
+const memoryTh string = "memory_th"
+const fsModule string = "filesystem_module"
+const fsTh string = "filesystem_th"
 
 
 func reader(file_path string, tail_chan TailChannel) {
@@ -54,6 +68,13 @@ func reader(file_path string, tail_chan TailChannel) {
 				tail_chan.Tail <- line.Text
 		}
 	}
+}
+
+
+func parseConfigLine (line string) string {
+	line = strings.Split(line, "=")[1]
+	line = strings.TrimSpace(line)
+	return line
 }
 
 
@@ -176,4 +197,77 @@ func GetFiles(path string) ([]string, []string) {
 		}
 	}
 	return dirs, hidden_files
+}
+
+
+func ReadConfig(path string) Config {
+	f, err := os.Open(path)
+	var config Config
+	config.Auth = false
+	config.Memory = false
+	config.Fs = false
+	config.MemoryTh = 1.0
+	config.StorageTh = 100
+	if err != nil {
+		logger.LogError(fmt.Sprintf("Could not open config file on %s: %s",
+									path, err.Error()), tag)
+		return config
+	}
+	defer f.Close()
+
+	logger.LogInfo(fmt.Sprintf("Parsing config from: %s", path), tag)
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		var line string
+		line = scanner.Text()
+		if strings.Contains(line, authModule) {
+			auth_module, err := strconv.Atoi(parseConfigLine(line))
+			if err == nil {
+				if auth_module == 1 {
+					config.Auth = true
+				}
+			}else {
+				logger.LogError(fmt.Sprintf("Error parsing %s", authModule),
+								tag)
+			}
+		}else if strings.Contains(line, memoryModule) {
+			memory_module, err := strconv.Atoi(parseConfigLine(line))
+			if err == nil {
+				if memory_module == 1 {
+					config.Memory = true
+				}
+			}else {
+				logger.LogError(fmt.Sprintf("Error parsing %s", memoryModule),
+								tag)
+			}
+		}else if strings.Contains(line, fsModule) {
+			fs_module, err := strconv.Atoi(parseConfigLine(line))
+			if err == nil {
+				if fs_module == 1 {
+					config.Fs = true
+				}
+			}else {
+				logger.LogError(fmt.Sprintf("Error parsing %s", fsModule), tag)
+			}
+		}else if strings.Contains(line, memoryTh) {
+			memory_th, err := strconv.ParseFloat(parseConfigLine(line), 32)
+			if err == nil {
+				config.MemoryTh = memory_th
+			}else {
+				logger.LogError(fmt.Sprintf("Error parsing %s", memoryTh), tag)
+			}
+		}else if strings.Contains(line, fsTh) {
+			fs_th, err := strconv.ParseFloat(parseConfigLine(line), 32)
+			if err == nil {
+				config.StorageTh = int(fs_th * 100)
+			}else {
+				logger.LogError(fmt.Sprintf("Error parsing %s", fsTh), tag)
+			}
+		}
+	}
+	logger.LogInfo(fmt.Sprintf("Parsed config is:\nAuth=%t\nMemory=%t\n"+
+							   "Memory TH=%f\nFs=%t\nFs TH=%d", config.Auth,
+							   config.Memory, config.MemoryTh, config.Fs,
+							   config.StorageTh), tag)
+	return config
 }
