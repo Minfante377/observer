@@ -12,15 +12,19 @@ import (
 
 const tag string = "FILESYSTEM"
 
-var stop bool = false
+var stop_chans []chan bool
+var mu sync.Mutex
 
 
-func totalUsageHandler(events_chan chan events.Event, usage_th int) {
+func totalUsageHandler(events_chan chan events.Event, usage_th int,
+					   stop chan bool) {
 	var partitions []utils.Partition
 	for true {
-		if stop {
+		select {
+		case <-stop:
 			logger.LogInfo("Stopping disk usage analysis", tag)
 			return
+		default:
 		}
 		partitions = utils.GetDiskUsage()
 		for _, partition := range partitions {
@@ -83,16 +87,18 @@ func checkDir(path string, events_chan chan events.Event, last_check int64,
 }
 
 
-func hiddenFilesHandler(events_chan chan events.Event) {
+func hiddenFilesHandler(events_chan chan events.Event, stop chan bool) {
 	var last_check int64
 	var dirs, files []string
 	var wg sync.WaitGroup
 	now := time.Now()
 	last_check = now.Unix()
 	for true {
-		if stop {
+		select {
+		case <-stop:
 			logger.LogInfo("Stopping hidden files analysis", tag)
 			return
+		default:
 		}
 		dirs, files = utils.GetFiles("/")
 		for _, f := range files {
@@ -111,12 +117,22 @@ func hiddenFilesHandler(events_chan chan events.Event) {
 
 
 func FsHandler(events_chan chan events.Event, usage_th int) {
-	stop = false
-	go totalUsageHandler(events_chan , usage_th)
-	go hiddenFilesHandler(events_chan)
+	var stop chan bool
+	logger.LogInfo("Starting filesystem analysis", tag)
+	mu.Lock()
+	stop_chans = append(stop_chans, stop)
+	mu.Unlock()
+	go totalUsageHandler(events_chan , usage_th, stop)
+	go hiddenFilesHandler(events_chan, stop)
 }
 
 
 func StopFsHandler() {
-	stop = true
+	mu.Lock()
+	if len(stop_chans) > 0 {
+		stop_chans[0] <- true
+		stop_chans[0] <- true
+		stop_chans = stop_chans[1:]
+	}
+	mu.Unlock()
 }

@@ -4,22 +4,27 @@ import (
 	"events"
 	"fmt"
 	"logger"
+	"sync"
 	"time"
 	"utils"
 )
 
 const tag = "MEMORY"
 
-var stop bool = false
+var stop_chans []chan bool
+var mu sync.Mutex
 
 
-func psMemoryHandler(events_chan chan events.Event) {
+func psMemoryHandler(events_chan chan events.Event, stop chan bool) {
 	var processes []utils.Process
 	var top_process utils.Process
 	top_process.Pid = -1
 	for true {
-		if stop {
+		select{
+		case <-stop:
 			logger.LogInfo("Stopping memory usage analysis by ps", tag)
+			return
+		default:
 		}
 		processes = utils.GetProcessesByMemory()
 		if processes != nil {
@@ -42,13 +47,16 @@ func psMemoryHandler(events_chan chan events.Event) {
 }
 
 
-func totalMemoryHandler(events_chan chan events.Event, memory_th float64) {
+func totalMemoryHandler(events_chan chan events.Event, memory_th float64,
+						stop chan bool) {
 	var th_flag bool = false
 	var total_memory, available_memory, memory_usage float64
 	for true {
-		if stop {
+		select{
+		case <-stop:
 			logger.LogInfo("Stopping total memory usage analisys", tag)
 			return
+		default:
 		}
 		total_memory, available_memory = utils.GetTotalMemory()
 		if total_memory > 0 {
@@ -75,12 +83,21 @@ func totalMemoryHandler(events_chan chan events.Event, memory_th float64) {
 
 func MemoryHandler(events_chan chan events.Event, memory_th float64) {
 	logger.LogInfo("Starting memory usage analysis", tag)
-	stop = false
-	go psMemoryHandler(events_chan)
-	go totalMemoryHandler(events_chan, memory_th)
+	var stop chan bool
+	mu.Lock()
+	stop_chans = append(stop_chans, stop)
+	mu.Unlock()
+	go psMemoryHandler(events_chan, stop)
+	go totalMemoryHandler(events_chan, memory_th, stop)
 }
 
 
 func StopMemoryHandler() {
-	stop = true
+	mu.Lock()
+	if len(stop_chans) > 0 {
+		stop_chans[0] <-true
+		stop_chans[0] <-true
+		stop_chans = stop_chans[1:]
+	}
+	mu.Unlock()
 }

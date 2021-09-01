@@ -1,4 +1,5 @@
 *.swp
 *.swo
+*.conf
 logs/
 test_logs/

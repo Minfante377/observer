@@ -60,7 +60,8 @@ func reader(file_path string, tail_chan TailChannel) {
 		return
 	}
 
-	for line := range t.Lines {
+	for true {
+		line := <-t.Lines
 		select {
 			case <-tail_chan.Stop:
 				return

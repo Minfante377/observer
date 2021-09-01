@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"logger"
 	"strings"
+	"sync"
 	"utils"
 )
 
@@ -15,12 +16,20 @@ const (
 	auth_failure string = "authentication failure"
 )
 
-var tail_channel utils.TailChannel
+var tail_channels []utils.TailChannel
+var stop_chans []chan bool
+var mu sync.Mutex
 
 
-func AuthParser(lines chan string, events_chan chan events.Event) {
+func AuthParser(lines chan string, events_chan chan events.Event,
+				stop chan bool) {
 	var line string
 	for true {
+		select{
+		case <-stop:
+			return
+		default:
+		}
 		line = <-lines
 		var fields []string = strings.Fields(line)
 		var date string = strings.Join(fields[0:3], "-")
@@ -41,9 +50,15 @@ func isAuthEvent(line string) bool {
 
 
 func AuthHandler(events_chan chan events.Event) {
-	tail_channel = utils.Tail(auth_file)
+	var tail_channel utils.TailChannel = utils.Tail(auth_file)
 	var auth_chan chan string = make(chan string, 10)
-	go AuthParser(auth_chan, events_chan)
+	var stop chan bool
+	mu.Lock()
+	tail_channels = append(tail_channels, tail_channel)
+	stop_chans = append(stop_chans, stop)
+	mu.Unlock()
+	go AuthParser(auth_chan, events_chan, stop)
+	logger.LogInfo("Starting auth.log analisys", tag)
 	for true{
 		select {
 			case <-tail_channel.Stop:
@@ -60,5 +75,12 @@ func AuthHandler(events_chan chan events.Event) {
 
 
 func StopAuthHandler() {
-	tail_channel.Stop <- true
+	mu.Lock()
+	if len(tail_channels) > 0 {
+		tail_channels[0].Stop <- true
+		stop_chans[0] <-true
+		tail_channels = tail_channels[1:]
+		stop_chans = stop_chans[1:]
+	}
+	mu.Unlock()
 }
