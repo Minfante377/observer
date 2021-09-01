@@ -87,13 +87,13 @@ func hiddenFilesHandler(events_chan chan events.Event) {
 	var last_check int64
 	var dirs, files []string
 	var wg sync.WaitGroup
+	now := time.Now()
+	last_check = now.Unix()
 	for true {
 		if stop {
 			logger.LogInfo("Stopping hidden files analysis", tag)
 			return
 		}
-		now := time.Now()
-		last_check = now.Unix()
 		dirs, files = utils.GetFiles("/")
 		for _, f := range files {
 			go checkFile(f, events_chan, last_check)
@@ -102,6 +102,8 @@ func hiddenFilesHandler(events_chan chan events.Event) {
 			wg.Add(1)
 			go checkDir(dir, events_chan, last_check, &wg)
 		}
+		now = time.Now()
+		last_check = now.Unix()
 		wg.Wait()
 		time.Sleep(time.Minute * 1)
 	}
