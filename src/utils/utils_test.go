@@ -178,3 +178,54 @@ func TestGetFiles(t *testing.T) {
         }
 	}
 }
+
+
+func TestReadConfig(t *testing.T) {
+	es := []struct {
+		input          string
+		output Config
+	}{
+		{"test.conf",
+		 Config{Auth:true, Memory:false, MemoryTh:1.0, Fs:true, StorageTh:50}},
+	}
+	for _, c := range es {
+		logger.LogTestStep(fmt.Sprintf("Create test files"))
+		f, err := os.OpenFile(c.input,
+							  os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+						      0666)
+		if err != nil {
+			t.Errorf("Error creating test file %s", c.input)
+		}
+		f.WriteString(fmt.Sprintf("%s = 1\n", AuthModule))
+		f.WriteString(fmt.Sprintf("%s=0\n%s=1.0\n", MemoryModule, MemoryTh))
+		f.WriteString(fmt.Sprintf("%s=1\n%s=0.5", FsModule, FsTh))
+
+		defer func() {
+			logger.LogTestStep("Remove test files")
+			os.RemoveAll(c.input)
+		}()
+
+		logger.LogTestStep("Execute function and verify output")
+		config := ReadConfig(c.input)
+		if config.Auth != c.output.Auth {
+			t.Errorf("Failure retrieving %s: %t vs %t", AuthModule,
+					 config.Auth, c.output.Auth)
+		}
+		if config.Memory != c.output.Memory {
+			t.Errorf("Failure retrieving %s: %t vs %t", MemoryModule,
+					 config.Memory, c.output.Memory)
+		}
+		if config.MemoryTh != c.output.MemoryTh {
+			t.Errorf("Failure retrieving %s: %f vs %f", MemoryTh,
+					 config.MemoryTh, c.output.MemoryTh)
+		}
+		if config.Fs != c.output.Fs {
+			t.Errorf("Failure retrieving %s: %t vs %t", FsModule,
+					 config.Fs, c.output.Fs)
+		}
+		if config.StorageTh != c.output.StorageTh {
+			t.Errorf("Failure retrieving %s: %d vs %d", FsTh,
+					 config.StorageTh, c.output.StorageTh)
+		}
+	}
+}

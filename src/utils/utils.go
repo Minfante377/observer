@@ -44,11 +44,11 @@ type Config struct {
 
 
 const tag string = "UTILS"
-const authModule string = "auth_module"
-const memoryModule string = "memory_module"
-const memoryTh string = "memory_th"
-const fsModule string = "filesystem_module"
-const fsTh string = "filesystem_th"
+const AuthModule string = "auth_module"
+const MemoryModule string = "memory_module"
+const MemoryTh string = "memory_th"
+const FsModule string = "filesystem_module"
+const FsTh string = "filesystem_th"
 
 
 func reader(file_path string, tail_chan TailChannel) {
@@ -220,48 +220,48 @@ func ReadConfig(path string) Config {
 	for scanner.Scan() {
 		var line string
 		line = scanner.Text()
-		if strings.Contains(line, authModule) {
+		if strings.Contains(line, AuthModule) {
 			auth_module, err := strconv.Atoi(parseConfigLine(line))
 			if err == nil {
 				if auth_module == 1 {
 					config.Auth = true
 				}
 			}else {
-				logger.LogError(fmt.Sprintf("Error parsing %s", authModule),
+				logger.LogError(fmt.Sprintf("Error parsing %s", AuthModule),
 								tag)
 			}
-		}else if strings.Contains(line, memoryModule) {
+		}else if strings.Contains(line, MemoryModule) {
 			memory_module, err := strconv.Atoi(parseConfigLine(line))
 			if err == nil {
 				if memory_module == 1 {
 					config.Memory = true
 				}
 			}else {
-				logger.LogError(fmt.Sprintf("Error parsing %s", memoryModule),
+				logger.LogError(fmt.Sprintf("Error parsing %s", MemoryModule),
 								tag)
 			}
-		}else if strings.Contains(line, fsModule) {
+		}else if strings.Contains(line, FsModule) {
 			fs_module, err := strconv.Atoi(parseConfigLine(line))
 			if err == nil {
 				if fs_module == 1 {
 					config.Fs = true
 				}
 			}else {
-				logger.LogError(fmt.Sprintf("Error parsing %s", fsModule), tag)
+				logger.LogError(fmt.Sprintf("Error parsing %s", FsModule), tag)
 			}
-		}else if strings.Contains(line, memoryTh) {
+		}else if strings.Contains(line, MemoryTh) {
 			memory_th, err := strconv.ParseFloat(parseConfigLine(line), 32)
 			if err == nil {
 				config.MemoryTh = memory_th
 			}else {
-				logger.LogError(fmt.Sprintf("Error parsing %s", memoryTh), tag)
+				logger.LogError(fmt.Sprintf("Error parsing %s", MemoryTh), tag)
 			}
-		}else if strings.Contains(line, fsTh) {
+		}else if strings.Contains(line, FsTh) {
 			fs_th, err := strconv.ParseFloat(parseConfigLine(line), 32)
 			if err == nil {
 				config.StorageTh = int(fs_th * 100)
 			}else {
-				logger.LogError(fmt.Sprintf("Error parsing %s", fsTh), tag)
+				logger.LogError(fmt.Sprintf("Error parsing %s", FsTh), tag)
 			}
 		}
 	}
