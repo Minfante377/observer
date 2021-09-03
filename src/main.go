@@ -14,6 +14,8 @@ import (
 
 const tag string = "MAIN"
 const configPath string = "modules.conf"
+var LogDir string
+var Debug string
 
 
 func initModules(config utils.Config, events_chan chan events.Event) {
@@ -59,6 +61,7 @@ func configHandler(events_chan chan events.Event) {
 
 
 func main() {
+	logger.SetLogFile(LogDir, Debug)
 	var events_chan chan events.Event = make(chan events.Event, 100)
 	var config utils.Config = utils.ReadConfig(configPath)
 	go events.EventHandler(events_chan)
