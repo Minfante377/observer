@@ -15,5 +15,7 @@ program or make build to build the executable.
 * Follow disk usage.
 * Detect sudo auth failures.
 * Follow creation and modification of hidden files.
+* Send events to a remote [server](https://github.com/Minfante377/listener)
+  using grpc
 
 ## Wip...
