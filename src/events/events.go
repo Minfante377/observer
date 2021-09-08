@@ -41,7 +41,7 @@ func sendEvents(event_chan chan Event, fail chan bool) {
 	}
 	defer conn.Close()
 	c := api.NewEventsClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 30)
 	defer cancel()
 	for true {
 		event := <-event_chan
