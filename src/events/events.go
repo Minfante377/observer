@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"logger"
-	"time"
 
 	"google.golang.org/grpc"
 )
@@ -41,12 +40,16 @@ func sendEvents(event_chan chan Event, fail chan bool) {
 	}
 	defer conn.Close()
 	c := api.NewEventsClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 30)
-	defer cancel()
+	ctx := context.Background()
 	for true {
 		event := <-event_chan
 		_, err := c.NewEvent(ctx, &api.Event{EventType:int32(event.EventType),
-							                 Date:event.Date})
+							                 Date:event.Date,
+											 User:event.User,
+										     Pwd:event.Pwd,
+									         Cmd:event.Cmd,
+										     Pid:string(event.Pid),
+									         Notes:event.Notes})
 		if err != nil {
 			logger.LogError(fmt.Sprintf(
 				"Error sending event: %s", err.Error()), tag)
