@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"logger"
+	"utils"
 
 	"google.golang.org/grpc"
 )
@@ -49,7 +50,8 @@ func sendEvents(event_chan chan Event, fail chan bool) {
 										     Pwd:event.Pwd,
 									         Cmd:event.Cmd,
 										     Pid:string(event.Pid),
-									         Notes:event.Notes})
+									         Notes:event.Notes,
+										     HostId: utils.GetHostId()})
 		if err != nil {
 			logger.LogError(fmt.Sprintf(
 				"Error sending event: %s", err.Error()), tag)

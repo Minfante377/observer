@@ -198,7 +198,8 @@ func TestReadConfig(t *testing.T) {
 		}
 		f.WriteString(fmt.Sprintf("%s = 1\n", AuthModule))
 		f.WriteString(fmt.Sprintf("%s=0\n%s=1.0\n", MemoryModule, MemoryTh))
-		f.WriteString(fmt.Sprintf("%s=1\n%s=0.5", FsModule, FsTh))
+		f.WriteString(fmt.Sprintf("%s=1\n%s=0.5\n", FsModule, FsTh))
+		f.WriteString(fmt.Sprintf("%s = localhost", HostId))
 
 		defer func() {
 			logger.LogTestStep("Remove test files")
@@ -206,7 +207,10 @@ func TestReadConfig(t *testing.T) {
 		}()
 
 		logger.LogTestStep("Execute function and verify output")
-		config := ReadConfig(c.input)
+		config, host_id := ReadConfig(c.input)
+		if host_id != "localhost" {
+			t.Errorf("Error retrieving host_id from config")
+		}
 		if config.Auth != c.output.Auth {
 			t.Errorf("Failure retrieving %s: %t vs %t", AuthModule,
 					 config.Auth, c.output.Auth)

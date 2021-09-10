@@ -49,6 +49,14 @@ const MemoryModule string = "memory_module"
 const MemoryTh string = "memory_th"
 const FsModule string = "filesystem_module"
 const FsTh string = "filesystem_th"
+const HostId string = "host_id"
+
+var hostId string = ""
+
+
+func setHostId(host_id_config string) {
+	hostId = host_id_config
+}
 
 
 func reader(file_path string, tail_chan TailChannel) {
@@ -201,7 +209,12 @@ func GetFiles(path string) ([]string, []string) {
 }
 
 
-func ReadConfig(path string) Config {
+func GetHostId() string{
+	return hostId
+}
+
+
+func ReadConfig(path string) (Config, string) {
 	f, err := os.Open(path)
 	var config Config
 	config.Auth = false
@@ -212,12 +225,13 @@ func ReadConfig(path string) Config {
 	if err != nil {
 		logger.LogError(fmt.Sprintf("Could not open config file on %s: %s",
 									path, err.Error()), tag)
-		return config
+		return config, ""
 	}
 	defer f.Close()
 
 	logger.LogInfo(fmt.Sprintf("Parsing config from: %s", path), tag)
 	scanner := bufio.NewScanner(f)
+	var host_id_config string
 	for scanner.Scan() {
 		var line string
 		line = scanner.Text()
@@ -264,11 +278,17 @@ func ReadConfig(path string) Config {
 			}else {
 				logger.LogError(fmt.Sprintf("Error parsing %s", FsTh), tag)
 			}
+		}else if strings.Contains(line, HostId) {
+			host_id_config = parseConfigLine(line)
+			setHostId(host_id_config)
 		}
 	}
+	if GetHostId() == "" {
+		panic("host_id is a mandatory config field!")
+	}
 	logger.LogInfo(fmt.Sprintf("Parsed config is:\nAuth=%t\nMemory=%t\n"+
-							   "Memory TH=%f\nFs=%t\nFs TH=%d", config.Auth,
-							   config.Memory, config.MemoryTh, config.Fs,
-							   config.StorageTh), tag)
-	return config
+							   "Memory TH=%f\nFs=%t\nFs TH=%d\nhost_id=%s",
+							   config.Auth, config.Memory, config.MemoryTh,
+							   config.Fs, config.StorageTh, GetHostId()), tag)
+	return config, host_id_config
 }

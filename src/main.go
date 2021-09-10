@@ -51,7 +51,8 @@ func configHandler(events_chan chan events.Event) {
 		mod_time := f.ModTime().Unix()
 		if mod_time > last_check {
 			last_check = mod_time
-			var config utils.Config = utils.ReadConfig(configPath)
+			var config utils.Config
+			config, _ = utils.ReadConfig(configPath)
 			stopModules()
 			initModules(config, events_chan)
 		}
@@ -63,7 +64,8 @@ func configHandler(events_chan chan events.Event) {
 func main() {
 	logger.SetLogFile(LogDir, Debug)
 	var events_chan chan events.Event = make(chan events.Event, 100)
-	var config utils.Config = utils.ReadConfig(configPath)
+	var config utils.Config
+	config, _ = utils.ReadConfig(configPath)
 	go events.EventHandler(events_chan)
 	initModules(config, events_chan)
 	go configHandler(events_chan)
