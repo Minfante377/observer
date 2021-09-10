@@ -52,7 +52,8 @@ func TestAuthParser(t *testing.T) {
 		go func () {
 			lines <-c.input
 		}()
-		go AuthParser(lines, events_chan)
+		var dummy_chan chan bool
+		go AuthParser(lines, events_chan, dummy_chan)
 		logger.LogTestStep("Verify a new event is generated")
 		time.Sleep(time.Second * 1)
 		select {
